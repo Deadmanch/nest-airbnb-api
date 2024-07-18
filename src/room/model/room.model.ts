@@ -15,7 +15,7 @@ export class RoomModel {
 	images: string[];
 
 	@Prop()
-	seaView: boolean;
+	isSeaView: boolean;
 
 	@Prop({ default: true })
 	isAvailable: boolean;
