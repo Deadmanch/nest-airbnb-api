@@ -1,6 +1,4 @@
-import { Types } from 'mongoose';
-
 export class CreateScheduleDto {
-	roomId: Types.ObjectId;
+	roomId: string;
 	date: string;
 }

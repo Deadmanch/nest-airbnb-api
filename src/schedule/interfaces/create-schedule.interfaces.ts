@@ -1,6 +1,4 @@
-import { Types } from 'mongoose';
-
 export interface ICreateSchedule {
-	roomId: Types.ObjectId;
+	roomId: string;
 	date: string;
 }
