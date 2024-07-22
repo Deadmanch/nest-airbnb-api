@@ -31,6 +31,67 @@ describe('AppController (e2e)', () => {
 				return;
 			});
 	});
+	it('room/create (POST) - fail - validate type', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, type: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.TYPE_MUST_BE_STRING);
+				return;
+			});
+	});
+	it('room/create (POST) - fail - validate description', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, description: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.DESCRIPTION_MUST_BE_STRING);
+				return;
+			});
+	});
+	it('room/create (POST) - fail - validate images must be array', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, images: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_ARRAY);
+				return;
+			});
+	});
+	it('room/create (POST) - fail - validate images must be not empty', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, images: [] })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_NOT_EMPTY);
+				return;
+			});
+	});
+	it('room/create (POST) - fail - validate images must be array of strings', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, images: ['image1', 123] })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_ARRAY_STRING);
+				return;
+			});
+	});
+	it('room/create (POST) - fail - validate isSeaView', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send({ ...roomTestDto, isSeaView: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(RoomErrors.IS_SEA_VIEW_MUST_BE_BOOLEAN);
+				return;
+			});
+	});
+
 	it('schedule/create (POST) - success', async () => {
 		scheduleTestDto.roomId = createdRoomId;
 		await request(app.getHttpServer())
@@ -60,6 +121,26 @@ describe('AppController (e2e)', () => {
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
+				return;
+			});
+	});
+	it('schedule/create (POST) - fail - validate date', async () => {
+		await request(app.getHttpServer())
+			.post('/schedule/create')
+			.send({ ...scheduleTestDto, date: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(ScheduleErrors.DATE_MUST_BE_STRING);
+				return;
+			});
+	});
+	it('schedule/create (POST) - fail - validate roomId', async () => {
+		await request(app.getHttpServer())
+			.post('/schedule/create')
+			.send({ ...scheduleTestDto, roomId: 123 })
+			.expect(400)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toContain(ScheduleErrors.ROOM_ID_MUST_BE_STRING);
 				return;
 			});
 	});
