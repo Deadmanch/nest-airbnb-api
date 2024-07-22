@@ -9,6 +9,8 @@ import {
 	Patch,
 	Post,
 	Query,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -19,6 +21,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 export class RoomController {
 	constructor(private readonly roomService: RoomService) {}
 
+	@UsePipes(new ValidationPipe())
 	@Post('create')
 	async create(@Body() dto: CreateRoomDto) {
 		return await this.roomService.create(dto);
