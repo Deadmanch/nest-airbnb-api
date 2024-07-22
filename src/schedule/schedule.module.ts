@@ -3,7 +3,7 @@ import { ScheduleController } from './schedule.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModel, ScheduleSchema } from './model/schedule.model';
 import { ScheduleService } from './schedule.service';
-import { RoomModule } from 'src/room/room.module';
+import { RoomModule } from '../room/room.module';
 
 @Module({
 	controllers: [ScheduleController],

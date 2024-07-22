@@ -30,6 +30,7 @@ export class ScheduleController {
 		if (!deletedSchedule) {
 			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
+		return deletedSchedule;
 	}
 
 	@Delete('hardDelete/:id')
@@ -38,6 +39,7 @@ export class ScheduleController {
 		if (!deletedSchedule) {
 			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
+		return deletedSchedule;
 	}
 
 	@Delete('deleteByRoomId/:roomId')
@@ -48,18 +50,26 @@ export class ScheduleController {
 		}
 	}
 
+	@Get('getAll')
+	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
+		const schedules = await this.scheduleService.getAll(page, limit);
+		if (!schedules) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return schedules;
+	}
+
 	@Get(':id')
 	async getById(@Param('id') id: string) {
 		return await this.scheduleService.getById(id);
 	}
 	@Get('getByRoomId/:roomId')
 	async getByRoomId(@Param('roomId') roomId: string) {
-		return await this.scheduleService.getByRoomId(roomId);
-	}
-
-	@Get('getAll')
-	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
-		return await this.scheduleService.getAll(page, limit);
+		const schedule = await this.scheduleService.getByRoomId(roomId);
+		if (!schedule) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return schedule;
 	}
 
 	@Patch(':id')
@@ -68,5 +78,7 @@ export class ScheduleController {
 		if (!updatedSchedule) {
 			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
+
+		return updatedSchedule;
 	}
 }

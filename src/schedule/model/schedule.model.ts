@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { RoomModel } from 'src/room/model/room.model';
+import { RoomModel } from '../../room/model/room.model';
 
 export type ScheduleDocument = HydratedDocument<ScheduleModel>;
 

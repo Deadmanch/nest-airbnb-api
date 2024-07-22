@@ -30,6 +30,7 @@ export class RoomController {
 		if (!deletedRoom) {
 			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
+		return deletedRoom;
 	}
 
 	@Delete('hardDelete/:id')
@@ -39,15 +40,23 @@ export class RoomController {
 			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
 	}
+	@Get('getAll')
+	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
+		const rooms = await this.roomService.getAll(page, limit);
+		if (!rooms) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return rooms;
+	}
 
 	@Get(':id')
 	async getById(@Param('id') id: string) {
-		return await this.roomService.getById(id);
-	}
+		const room = await this.roomService.getById(id);
+		if (!room) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 
-	@Get('getAll')
-	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
-		return await this.roomService.getAll(page, limit);
+		return room;
 	}
 
 	@Patch(':id')
@@ -56,5 +65,7 @@ export class RoomController {
 		if (!updatedRoom) {
 			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
+
+		return updatedRoom;
 	}
 }

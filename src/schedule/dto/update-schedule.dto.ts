@@ -1,3 +1,3 @@
 export class UpdateScheduleDto {
-	date?: string;
+	date: string;
 }
