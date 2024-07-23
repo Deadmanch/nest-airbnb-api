@@ -62,6 +62,7 @@ export class RoomController {
 		return room;
 	}
 
+	@UsePipes(new ValidationPipe())
 	@Patch(':id')
 	async update(@Param('id') id: string, @Body() dto: UpdateRoomDto) {
 		const updatedRoom = await this.roomService.update(id, dto);

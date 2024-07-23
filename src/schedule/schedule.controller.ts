@@ -75,6 +75,7 @@ export class ScheduleController {
 		return schedule;
 	}
 
+	@UsePipes(new ValidationPipe())
 	@Patch(':id')
 	async update(@Param('id') id: string, @Body() dto: UpdateScheduleDto) {
 		const updatedSchedule = await this.scheduleService.update(id, dto);
