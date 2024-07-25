@@ -25,12 +25,14 @@ export class RoomService {
 		return this.roomModel.findById(id).exec();
 	}
 
-	async getAll(page: number = 1, limit: number = 10): Promise<RoomDocument[]> {
-		return this.roomModel
+	async getAll(page: number = 1, limit: number = 10): Promise<RoomDocument[] | null> {
+		const rooms = await this.roomModel
 			.find()
 			.skip((page - 1) * limit)
 			.limit(limit)
 			.exec();
+
+		return rooms.length > 0 ? rooms : null;
 	}
 
 	async update(id: string, data: IUpdateRoom) {

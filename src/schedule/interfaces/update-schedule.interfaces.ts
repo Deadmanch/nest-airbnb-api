@@ -1,3 +1,3 @@
 export interface IUpdateSchedule {
-	date?: string;
+	date: string;
 }

@@ -15,5 +15,6 @@ import { RoomModel, RoomSchema } from './model/room.model';
 		]),
 	],
 	providers: [RoomService],
+	exports: [MongooseModule],
 })
 export class RoomModule {}

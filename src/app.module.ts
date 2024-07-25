@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from './schedule/schedule.module';
 import { RoomModule } from './room/room.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from './schedule/schedule.module';
 
 @Module({
 	imports: [
@@ -10,15 +10,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 		MongooseModule.forRootAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
-				uri: `mongodb://${configService.get<string>('MONGO_HOST')}/${configService.get<string>('MONGO_NAME')}`,
-				user: configService.get<string>('MONGO_USER'),
-				pass: configService.get<string>('MONGO_PASS'),
+				uri: `mongodb://${configService.get<string>('MONGO_HOST')}/${configService.get<string>('MONGO_PORT')}`,
+				user: configService.get<string>('MONGO_LOGIN'),
+				pass: configService.get<string>('MONGO_PASSWORD'),
 				authSource: configService.get<string>('MONGO_AUTHDATABASE'),
 			}),
 			inject: [ConfigService],
 		}),
-		ScheduleModule,
 		RoomModule,
+		ScheduleModule,
 	],
 	controllers: [],
 	providers: [],
