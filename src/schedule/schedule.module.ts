@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModel, ScheduleSchema } from './model/schedule.model';
 import { ScheduleService } from './schedule.service';
 import { RoomModule } from '../room/room.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
 	controllers: [ScheduleController],
@@ -15,6 +16,7 @@ import { RoomModule } from '../room/room.module';
 			},
 		]),
 		RoomModule,
+		UserModule,
 	],
 	providers: [ScheduleService],
 })

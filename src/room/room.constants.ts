@@ -7,4 +7,5 @@ export const RoomErrors = {
 	IMAGES_MUST_BE_ARRAY_STRING: 'Изображения должны быть массивом строк.',
 	IMAGES_MUST_BE_NOT_EMPTY: 'Массив изображений не может быть пустым.',
 	IS_SEA_VIEW_MUST_BE_BOOLEAN: 'Поле "isSeaView" должно быть boolean.',
+	NUMBER_ROOM_MUST_BE_STRING: 'Номер помещения должен быть строкой.',
 };

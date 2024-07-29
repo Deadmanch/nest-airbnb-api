@@ -59,6 +59,55 @@ export class ScheduleService {
 		return schedules.length > 0 ? schedules : null;
 	}
 
+	async getBookingStatsForMonth(
+		month: number,
+		year: number,
+	): Promise<{ roomNumber: string; bookingDays: number }[]> {
+		const startDate = new Date(year, month - 1, 1);
+		const endDate = new Date(year, month, 0);
+
+		const schedules = await this.scheduleModel
+			.aggregate([
+				{
+					$match: {
+						date: {
+							$gte: startDate,
+							$lt: endDate,
+						},
+						isDeleted: false,
+					},
+				},
+				{
+					$group: {
+						_id: '$roomId',
+						bookingDays: { $sum: 1 },
+					},
+				},
+				{
+					$lookup: {
+						from: 'roommodels',
+						localField: '_id',
+						foreignField: '_id',
+						as: 'roomDetails',
+					},
+				},
+				{
+					$unwind: '$roomDetails',
+				},
+				{
+					$project: {
+						_id: 1,
+						bookingDays: 1,
+						numberRoom: '$roomDetails.numberRoom',
+						type: '$roomDetails.type',
+					},
+				},
+			])
+			.exec();
+
+		return schedules;
+	}
+
 	async update(id: string, updateSchedule: IUpdateSchedule) {
 		return this.scheduleModel.findByIdAndUpdate(id, updateSchedule, { new: true }).exec();
 	}
