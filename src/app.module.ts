@@ -3,6 +3,8 @@ import { RoomModule } from './room/room.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from './schedule/schedule.module';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 @Module({
 	imports: [
@@ -19,6 +21,8 @@ import { ScheduleModule } from './schedule/schedule.module';
 		}),
 		RoomModule,
 		ScheduleModule,
+		AuthModule,
+		UserModule,
 	],
 	controllers: [],
 	providers: [],

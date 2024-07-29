@@ -3,14 +3,25 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { disconnect, Types } from 'mongoose';
-import { roomTestDto, scheduleTestDto, updateRoomDto, updateScheduleDto } from './test.variables';
+import {
+	LoginAdminTestDto,
+	LoginUserTestDto,
+	roomTestDto,
+	scheduleTestDto,
+	TestBookingStatsDto,
+	updateRoomDto,
+	updateScheduleDto,
+} from './test.variables';
 import { ScheduleErrors } from '../src/schedule/schedule.constant';
 import { RoomErrors } from '../src/room/room.constants';
+import { AuthErrors } from '../src/auth/auth.constants';
 
 describe('AppController (e2e)', () => {
 	let app: INestApplication;
 	let createdRoomId: string;
 	let createdScheduleId: string;
+	let adminToken: string;
+	let userToken: string;
 
 	beforeEach(async () => {
 		const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -20,10 +31,34 @@ describe('AppController (e2e)', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 	});
+	it('/auth/login (POST) - User success', async () => {
+		await request(app.getHttpServer())
+			.post('/auth/login')
+			.send(LoginUserTestDto)
+			.expect(200)
+			.then(({ body }: request.Response) => {
+				expect(body.access_token).toBeDefined();
+				userToken = body.access_token;
+				return;
+			});
+	});
+	it('/auth/login (POST) - Admin success', async () => {
+		await request(app.getHttpServer())
+			.post('/auth/login')
+			.send(LoginAdminTestDto)
+			.expect(200)
+			.then(({ body }: request.Response) => {
+				expect(body.access_token).toBeDefined();
+				adminToken = body.access_token;
+				return;
+			});
+	});
+
 	it('room/create (POST) - success', async () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send(roomTestDto)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(201)
 			.then(({ body }: request.Response) => {
 				createdRoomId = body._id;
@@ -31,10 +66,23 @@ describe('AppController (e2e)', () => {
 				return;
 			});
 	});
+
+	it('room/create (POST) - fail - Forbidden', async () => {
+		await request(app.getHttpServer())
+			.post('/room/create')
+			.send(roomTestDto)
+			.set('Authorization', `Bearer ${userToken}`)
+			.expect(403)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toBe(AuthErrors.NO_PERMISSION);
+				return;
+			});
+	});
 	it('room/create (POST) - fail - validate type', async () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, type: 123 })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.TYPE_MUST_BE_STRING);
@@ -45,6 +93,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, description: 123 })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.DESCRIPTION_MUST_BE_STRING);
@@ -55,6 +104,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, images: 123 })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_ARRAY);
@@ -65,6 +115,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, images: [] })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_NOT_EMPTY);
@@ -75,6 +126,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, images: ['image1', 123] })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.IMAGES_MUST_BE_ARRAY_STRING);
@@ -85,6 +137,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/room/create')
 			.send({ ...roomTestDto, isSeaView: 123 })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(RoomErrors.IS_SEA_VIEW_MUST_BE_BOOLEAN);
@@ -97,6 +150,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
 			.send(scheduleTestDto)
+			.set('Authorization', `Bearer ${userToken}`)
 			.expect(201)
 			.then(({ body }: request.Response) => {
 				createdScheduleId = body._id;
@@ -104,10 +158,21 @@ describe('AppController (e2e)', () => {
 				return;
 			});
 	});
+	it('schedule/create (POST) - fail - Unauthorized', async () => {
+		await request(app.getHttpServer())
+			.post('/schedule/create')
+			.send(scheduleTestDto)
+			.set('Authorization', `Bearer`)
+			.expect(401, {
+				statusCode: 401,
+				message: 'Unauthorized',
+			});
+	});
 	it('scedule/create (POST) - fail - schedule already exists', async () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
 			.send(scheduleTestDto)
+			.set('Authorization', `Bearer ${userToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.ALREADY_EXISTS);
@@ -118,6 +183,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
 			.send({ date: new Date().toISOString(), roomId: new Types.ObjectId().toHexString() })
+			.set('Authorization', `Bearer ${userToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
@@ -128,6 +194,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
 			.send({ ...scheduleTestDto, date: 123 })
+			.set('Authorization', `Bearer ${userToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(ScheduleErrors.DATE_MUST_BE_STRING);
@@ -138,6 +205,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
 			.send({ ...scheduleTestDto, roomId: 123 })
+			.set('Authorization', `Bearer ${userToken}`)
 			.expect(400)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toContain(ScheduleErrors.ROOM_ID_MUST_BE_STRING);
@@ -148,6 +216,7 @@ describe('AppController (e2e)', () => {
 	it('schedule/getAll (GET) - success', async () => {
 		await request(app.getHttpServer())
 			.get('/schedule/getAll')
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.length).toBe(1);
@@ -155,9 +224,21 @@ describe('AppController (e2e)', () => {
 			});
 	});
 
+	it('schedule/getAll (GET) - fail - Forbidden', async () => {
+		await request(app.getHttpServer())
+			.get('/schedule/getAll')
+			.set('Authorization', `Bearer ${userToken}`)
+			.expect(403)
+			.then(({ body }: request.Response) => {
+				expect(body.message).toBe(AuthErrors.NO_PERMISSION);
+				return;
+			});
+	});
+
 	it('schedule/getById (GET) - success', async () => {
 		await request(app.getHttpServer())
 			.get(`/schedule/${createdScheduleId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body._id).toBe(createdScheduleId);
@@ -167,6 +248,7 @@ describe('AppController (e2e)', () => {
 	it('schedule/getById (GET) - fail - not found', async () => {
 		await request(app.getHttpServer())
 			.get(`/schedule/${new Types.ObjectId().toHexString()}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -176,6 +258,7 @@ describe('AppController (e2e)', () => {
 	it('schedule/getByRoomId (GET) - success', async () => {
 		await request(app.getHttpServer())
 			.get(`/schedule/getByRoomId/${createdRoomId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.length).toBe(1);
@@ -185,9 +268,22 @@ describe('AppController (e2e)', () => {
 	it('schedule/getByRoomId (GET) - fail - not found', async () => {
 		await request(app.getHttpServer())
 			.get(`/schedule/getByRoomId/${new Types.ObjectId().toHexString()}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
+				return;
+			});
+	});
+	it('schedule/getBookingStatsForMonth (GET) - success', async () => {
+		await request(app.getHttpServer())
+			.get(
+				`/schedule/getBookingStatsForMonth/${TestBookingStatsDto.month}/${TestBookingStatsDto.year}`,
+			)
+			.set('Authorization', `Bearer ${adminToken}`)
+			.expect(200)
+			.then(({ body }: request.Response) => {
+				expect(body.length).toBe(1);
 				return;
 			});
 	});
@@ -195,6 +291,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.patch(`/schedule/${new Types.ObjectId().toHexString()}`)
 			.send({ date: new Date().toISOString() })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -204,16 +301,24 @@ describe('AppController (e2e)', () => {
 	it('schedule/softDelete (DELETE) - success', async () => {
 		await request(app.getHttpServer())
 			.delete(`/schedule/${createdScheduleId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.isDeleted).toBe(true);
 				return;
 			});
 	});
+	it('schedule/softDelete (DELETE) - fail - Unauthorized', async () => {
+		await request(app.getHttpServer()).delete(`/schedule/${createdScheduleId}`).expect(401, {
+			statusCode: 401,
+			message: 'Unauthorized',
+		});
+	});
 	it('schedule/update (PATCH) - success', async () => {
 		await request(app.getHttpServer())
 			.patch(`/schedule/${createdScheduleId}`)
 			.send(updateScheduleDto)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.date).toBe(new Date(updateScheduleDto.date).toISOString());
@@ -224,6 +329,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.patch(`/schedule/${new Types.ObjectId().toHexString()}`)
 			.send({ date: new Date().toISOString() })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -231,12 +337,23 @@ describe('AppController (e2e)', () => {
 			});
 	});
 
+	it('schedule/deleteByRoomId (DELETE) - fail - Unauthorized', async () => {
+		await request(app.getHttpServer())
+			.delete(`/schedule/deleteByRoomId/${createdRoomId}`)
+			.expect(401, {
+				statusCode: 401,
+				message: 'Unauthorized',
+			});
+	});
+
 	it('schedule/deleteByRoomId (DELETE) - success', async () => {
 		await request(app.getHttpServer())
 			.delete(`/schedule/deleteByRoomId/${createdRoomId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200);
 		await request(app.getHttpServer())
 			.get(`/schedule/${createdScheduleId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -247,6 +364,7 @@ describe('AppController (e2e)', () => {
 	it('schedule/getAll (GET) - fail - empty', async () => {
 		await request(app.getHttpServer())
 			.get('/schedule/getAll')
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -257,6 +375,7 @@ describe('AppController (e2e)', () => {
 	it('schedule/hardDelete (DELETE) - success', async () => {
 		await request(app.getHttpServer())
 			.post('/schedule/create')
+			.set('Authorization', `Bearer ${adminToken}`)
 			.send(scheduleTestDto)
 			.expect(201)
 			.then(({ body }: request.Response) => {
@@ -266,9 +385,11 @@ describe('AppController (e2e)', () => {
 			});
 		await request(app.getHttpServer())
 			.delete(`/schedule/hardDelete/${createdScheduleId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200);
 		await request(app.getHttpServer())
 			.get(`/schedule/${createdScheduleId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(ScheduleErrors.NOT_FOUND);
@@ -279,6 +400,7 @@ describe('AppController (e2e)', () => {
 	it('room/softDelete (DELETE) - success', async () => {
 		await request(app.getHttpServer())
 			.delete(`/room/${createdRoomId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.isDeleted).toBe(true);
@@ -288,6 +410,7 @@ describe('AppController (e2e)', () => {
 	it('room/getAll (GET) - success', async () => {
 		await request(app.getHttpServer())
 			.get('/room/getAll')
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.length).toBe(1);
@@ -297,6 +420,7 @@ describe('AppController (e2e)', () => {
 	it('room/getById (GET) - fail - not found', async () => {
 		await request(app.getHttpServer())
 			.get(`/room/${new Types.ObjectId().toHexString()}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
@@ -307,6 +431,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.patch(`/room/${createdRoomId}`)
 			.send(updateRoomDto)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.then(({ body }: request.Response) => {
 				expect(body.type).toBe(updateRoomDto.type);
@@ -318,6 +443,7 @@ describe('AppController (e2e)', () => {
 		await request(app.getHttpServer())
 			.patch(`/room/${new Types.ObjectId().toHexString()}`)
 			.send({ name: 'test' })
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
@@ -326,9 +452,13 @@ describe('AppController (e2e)', () => {
 	});
 
 	it('room/hardDelete (DELETE) - success', async () => {
-		await request(app.getHttpServer()).delete(`/room/hardDelete/${createdRoomId}`).expect(200);
+		await request(app.getHttpServer())
+			.delete(`/room/hardDelete/${createdRoomId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
+			.expect(200);
 		await request(app.getHttpServer())
 			.get(`/room/${createdRoomId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
@@ -338,6 +468,7 @@ describe('AppController (e2e)', () => {
 	it('room/getAll (GET) - fail - empty', async () => {
 		await request(app.getHttpServer())
 			.get('/room/getAll')
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(404)
 			.then(({ body }: request.Response) => {
 				expect(body.message).toBe(RoomErrors.NOT_FOUND);
