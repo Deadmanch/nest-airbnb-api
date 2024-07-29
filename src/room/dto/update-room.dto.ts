@@ -3,6 +3,9 @@ import { RoomErrors } from '../room.constants';
 
 export class UpdateRoomDto {
 	@IsOptional()
+	@IsString({ message: RoomErrors.NUMBER_ROOM_MUST_BE_STRING })
+	numberRoom?: string;
+	@IsOptional()
 	@IsString({ message: RoomErrors.TYPE_MUST_BE_STRING })
 	type?: string;
 	@IsOptional()
