@@ -96,7 +96,6 @@ export class ScheduleService {
 				},
 				{
 					$project: {
-						_id: 1,
 						bookingDays: 1,
 						numberRoom: '$roomDetails.numberRoom',
 						type: '$roomDetails.type',

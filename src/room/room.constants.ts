@@ -8,4 +8,5 @@ export const RoomErrors = {
 	IMAGES_MUST_BE_NOT_EMPTY: 'Массив изображений не может быть пустым.',
 	IS_SEA_VIEW_MUST_BE_BOOLEAN: 'Поле "isSeaView" должно быть boolean.',
 	NUMBER_ROOM_MUST_BE_STRING: 'Номер помещения должен быть строкой.',
+	ALREADY_EXISTS_NUMBER_ROOM: 'Комната с таким номером уже существует',
 };
