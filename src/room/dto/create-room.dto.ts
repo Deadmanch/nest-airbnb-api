@@ -2,6 +2,8 @@ import { ArrayNotEmpty, IsArray, IsBoolean, IsString } from 'class-validator';
 import { RoomErrors } from '../room.constants';
 
 export class CreateRoomDto {
+	@IsString({ message: RoomErrors.NUMBER_ROOM_MUST_BE_STRING })
+	numberRoom: string;
 	@IsString({ message: RoomErrors.TYPE_MUST_BE_STRING })
 	type: string;
 	@IsString({ message: RoomErrors.DESCRIPTION_MUST_BE_STRING })

@@ -5,6 +5,9 @@ export type RoomDocument = HydratedDocument<RoomModel>;
 
 @Schema({ timestamps: true })
 export class RoomModel {
+	@Prop({ required: true, unique: true })
+	numberRoom: string;
+
 	@Prop({ required: true })
 	type: string;
 
