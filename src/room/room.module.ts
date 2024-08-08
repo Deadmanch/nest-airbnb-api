@@ -4,6 +4,7 @@ import { RoomService } from './room.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RoomModel, RoomSchema } from './model/room.model';
 import { UserModule } from '../user/user.module';
+import { FilesModule } from '../files/files.module';
 
 @Module({
 	controllers: [RoomController],
@@ -15,6 +16,7 @@ import { UserModule } from '../user/user.module';
 			},
 		]),
 		UserModule,
+		FilesModule,
 	],
 	providers: [RoomService],
 	exports: [MongooseModule],

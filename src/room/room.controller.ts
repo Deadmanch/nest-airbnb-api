@@ -9,7 +9,9 @@ import {
 	Patch,
 	Post,
 	Query,
+	UploadedFiles,
 	UseGuards,
+	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
@@ -22,16 +24,29 @@ import { RoleGuard } from '../auth/guards/role.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { Role } from '../user/model/role.enum';
 import { IdValidationPipe } from '../pipes/id-validation.pipe';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { FilesService } from '../files/files.service';
+import { FileElementResponse } from '../files/dto/file-element.response';
 
 @Controller('room')
 export class RoomController {
-	constructor(private readonly roomService: RoomService) {}
+	constructor(
+		private readonly roomService: RoomService,
+		private readonly filesService: FilesService,
+	) {}
 
 	@UsePipes(new ValidationPipe())
 	@Roles(Role.ADMIN)
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Post('create')
-	async create(@Body() dto: CreateRoomDto) {
+	@UseInterceptors(FilesInterceptor('images'))
+	async create(@Body() dto: CreateRoomDto, @UploadedFiles() images: Express.Multer.File[]) {
+		const imageUrls: FileElementResponse[] = [];
+		for (const image of images) {
+			const response = await this.filesService.saveAsWebp(image);
+			imageUrls.push(response);
+		}
+		dto.images = imageUrls.map((file) => file.url);
 		return await this.roomService.create(dto);
 	}
 
@@ -78,12 +93,22 @@ export class RoomController {
 	@Roles(Role.ADMIN)
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Patch(':id')
-	async update(@Param('id', IdValidationPipe) id: string, @Body() dto: UpdateRoomDto) {
+	@UseInterceptors(FilesInterceptor('images'))
+	async update(
+		@Param('id', IdValidationPipe) id: string,
+		@Body() dto: UpdateRoomDto,
+		@UploadedFiles() images: Express.Multer.File[],
+	) {
+		const imageUrls: FileElementResponse[] = [];
+		for (const image of images) {
+			const response = await this.filesService.saveAsWebp(image);
+			imageUrls.push(response);
+		}
+		dto.images = imageUrls.map((file) => file.url);
 		const updatedRoom = await this.roomService.update(id, dto);
 		if (!updatedRoom) {
 			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
-
 		return updatedRoom;
 	}
 }
