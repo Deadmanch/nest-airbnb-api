@@ -10,7 +10,7 @@ import { RoomErrors } from './room.constants';
 export class RoomService {
 	constructor(@InjectModel(RoomModel.name) private readonly roomModel: Model<RoomDocument>) {}
 
-	async create(data: ICreateRoom) {
+	async create(data: ICreateRoom): Promise<RoomDocument> {
 		const existingRoom = await this.roomModel.findOne({ numberRoom: data.numberRoom });
 		if (existingRoom) {
 			throw new HttpException(RoomErrors.ALREADY_EXISTS_NUMBER_ROOM, HttpStatus.BAD_REQUEST);
@@ -41,6 +41,13 @@ export class RoomService {
 	}
 
 	async update(id: string, data: IUpdateRoom) {
-		return this.roomModel.findByIdAndUpdate(id, data, { new: true }).exec();
+		const room = await this.roomModel.findById(id);
+		if (!room) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		if (data.images && data.images.length > 0) {
+			room.images = data.images;
+		}
+		return await this.roomModel.findByIdAndUpdate(id, room, { new: true }).exec();
 	}
 }

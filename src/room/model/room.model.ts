@@ -14,9 +14,6 @@ export class RoomModel {
 	@Prop()
 	description: string;
 
-	@Prop({ type: () => [String], required: true })
-	images: string[];
-
 	@Prop()
 	isSeaView: boolean;
 
@@ -25,6 +22,9 @@ export class RoomModel {
 
 	@Prop({ default: false })
 	isDeleted: boolean;
+
+	@Prop({ type: () => [String] })
+	images: string[];
 }
 
 export const RoomSchema = SchemaFactory.createForClass(RoomModel);

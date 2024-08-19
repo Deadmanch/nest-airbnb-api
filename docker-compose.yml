@@ -12,3 +12,14 @@ services:
 
     volumes:
       - ./mongo-data:/data/db
+
+  airbnb.api:
+    image: airbnb-api
+    restart: always
+    container_name: airbnb-api
+    ports:
+      - 3000:3000
+    volumes:
+      - ./.env:/app/.env
+    depends_on:
+      - airbnb.mongo
