@@ -5,6 +5,7 @@ import { ScheduleModel, ScheduleSchema } from './model/schedule.model';
 import { ScheduleService } from './schedule.service';
 import { RoomModule } from '../room/room.module';
 import { UserModule } from '../user/user.module';
+import { TelegramModule } from '../telegram/telegram.module';
 
 @Module({
 	controllers: [ScheduleController],
@@ -17,6 +18,7 @@ import { UserModule } from '../user/user.module';
 		]),
 		RoomModule,
 		UserModule,
+		TelegramModule,
 	],
 	providers: [ScheduleService],
 })
