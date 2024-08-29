@@ -8,6 +8,10 @@ import { IUpdateSchedule } from './interfaces/update-schedule.interfaces';
 import { RoomDocument, RoomModel } from '../room/model/room.model';
 import { RoomErrors } from '../room/room.constants';
 import { TelegramService } from '../telegram/telegram.service';
+import {
+	generateCreateSсheduleMessage,
+	generateDeleteSсheduleMessage,
+} from '../helpers/generate-message';
 
 @Injectable()
 export class ScheduleService {
@@ -26,15 +30,9 @@ export class ScheduleService {
 		if (existingSchedule) {
 			throw new HttpException(ScheduleErrors.ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
 		}
-		const message =
-			`🔔 Уведомление для администраторов - бронь создана 🔔\n` +
-			`📌 Комната №:${existingRoom.numberRoom}\n` +
-			`🏷️ Тип комнаты: ${existingRoom.type}\n` +
-			`📅 Дата бронирования: ${date}\n` +
-			`✔️ Комната успешно забронирована клиентом!\n` +
-			`🛠️ Просим проверить все детали и подготовить комнату к заселению!`;
+		const message = generateCreateSсheduleMessage(existingRoom, date);
 
-		await this.telegramService.sendMessage(message);
+		this.telegramService.sendMessage(message);
 		return this.scheduleModel.create({ roomId, date });
 	}
 
@@ -62,13 +60,9 @@ export class ScheduleService {
 		if (existingSchedule.isDeleted) {
 			throw new HttpException(ScheduleErrors.ALREADY_DELETED, HttpStatus.BAD_REQUEST);
 		}
-		const message =
-			'🔔 Уведомление для администраторов - бронь удалена 🔔\n' +
-			`📌 Комната ID: ${existingSchedule.roomId}\n` +
-			`📅 Дата удалённого бронирования: ${existingSchedule.date.toLocaleDateString()}\n` +
-			'🛠️ Просим проверить и связаться с клиентом для уточнения деталей!';
+		const message = generateDeleteSсheduleMessage(existingSchedule);
 
-		await this.telegramService.sendMessage(message);
+		this.telegramService.sendMessage(message);
 		return this.scheduleModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true }).exec();
 	}
 
