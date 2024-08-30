@@ -19,14 +19,26 @@ export class RoomService {
 	}
 
 	async delete(id: string): Promise<RoomDocument | null> {
+		const existingRoom = await this.roomModel.findById(id).exec();
+		if (!existingRoom) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.roomModel.findByIdAndDelete(id).exec();
 	}
 
 	async softDelete(id: string): Promise<RoomDocument | null> {
+		const existingRoom = await this.roomModel.findById(id).exec();
+		if (!existingRoom) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.roomModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true }).exec();
 	}
 
 	async getById(id: string): Promise<RoomDocument | null> {
+		const existingRoom = await this.roomModel.findById(id).exec();
+		if (!existingRoom) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.roomModel.findById(id).exec();
 	}
 
@@ -37,7 +49,10 @@ export class RoomService {
 			.limit(limit)
 			.exec();
 
-		return rooms.length > 0 ? rooms : null;
+		if (rooms.length === 0) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return rooms;
 	}
 
 	async update(id: string, data: IUpdateRoom) {

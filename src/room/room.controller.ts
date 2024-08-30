@@ -54,39 +54,23 @@ export class RoomController {
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Delete(':id')
 	async softDelete(@Param('id') id: string) {
-		const deletedRoom = await this.roomService.softDelete(id);
-		if (!deletedRoom) {
-			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return deletedRoom;
+		return await this.roomService.softDelete(id);
 	}
 
 	@Roles(Role.ADMIN)
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Delete('hardDelete/:id')
 	async delete(@Param('id', IdValidationPipe) id: string) {
-		const deletedRoom = await this.roomService.delete(id);
-		if (!deletedRoom) {
-			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
+		return await this.roomService.delete(id);
 	}
 	@Get('getAll')
 	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
-		const rooms = await this.roomService.getAll(page, limit);
-		if (!rooms) {
-			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return rooms;
+		return await this.roomService.getAll(page, limit);
 	}
 
 	@Get(':id')
 	async getById(@Param('id', IdValidationPipe) id: string) {
-		const room = await this.roomService.getById(id);
-		if (!room) {
-			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-
-		return room;
+		return await this.roomService.getById(id);
 	}
 
 	@UsePipes(new ValidationPipe())

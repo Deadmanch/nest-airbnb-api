@@ -15,13 +15,13 @@ import {
 } from '@nestjs/common';
 import { ScheduleService } from './schedule.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
-import { ScheduleErrors } from './schedule.constant';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RoleGuard } from '../auth/guards/role.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { Role } from '../user/model/role.enum';
 import { IdValidationPipe } from '../pipes/id-validation.pipe';
+import { ScheduleErrors } from './schedule.constant';
 
 @Controller('schedule')
 export class ScheduleController {
@@ -37,41 +37,27 @@ export class ScheduleController {
 	@UseGuards(JwtAuthGuard)
 	@Delete(':id')
 	async softDelete(@Param('id', IdValidationPipe) id: string) {
-		const deletedSchedule = await this.scheduleService.softDelete(id);
-		if (!deletedSchedule) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return deletedSchedule;
+		return await this.scheduleService.softDelete(id);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@Roles(Role.ADMIN)
+	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Delete('hardDelete/:id')
 	async delete(@Param('id', IdValidationPipe) id: string) {
-		const deletedSchedule = await this.scheduleService.delete(id);
-		if (!deletedSchedule) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return deletedSchedule;
+		return await this.scheduleService.delete(id);
 	}
-
-	@UseGuards(JwtAuthGuard)
+	@Roles(Role.ADMIN)
+	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Delete('deleteByRoomId/:roomId')
 	async deleteByRoomId(@Param('roomId', IdValidationPipe) roomId: string) {
-		const deletedSchedule = await this.scheduleService.deleteByRoomId(roomId);
-		if (!deletedSchedule) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
+		return await this.scheduleService.deleteByRoomId(roomId);
 	}
 
 	@Roles(Role.ADMIN)
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Get('getAll')
 	async getAll(@Query('page') page: number, @Query('limit') limit: number) {
-		const schedules = await this.scheduleService.getAll(page, limit);
-		if (!schedules) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return schedules;
+		return await this.scheduleService.getAll(page, limit);
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -84,11 +70,7 @@ export class ScheduleController {
 	@UseGuards(JwtAuthGuard, RoleGuard)
 	@Get('getByRoomId/:roomId')
 	async getByRoomId(@Param('roomId', IdValidationPipe) roomId: string) {
-		const schedule = await this.scheduleService.getByRoomId(roomId);
-		if (!schedule) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return schedule;
+		return await this.scheduleService.getByRoomId(roomId);
 	}
 
 	@Roles(Role.ADMIN)
@@ -98,22 +80,13 @@ export class ScheduleController {
 		if (!month || !year) {
 			throw new HttpException(ScheduleErrors.MONTH_AND_YEAR_REQUIRED, HttpStatus.BAD_REQUEST);
 		}
-		const bookingStats = await this.scheduleService.getBookingStatsForMonth(month, year);
-		if (!bookingStats) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return bookingStats;
+		return await this.scheduleService.getBookingStatsForMonth(month, year);
 	}
 
 	@UsePipes(new ValidationPipe())
 	@UseGuards(JwtAuthGuard)
 	@Patch(':id')
 	async update(@Param('id', IdValidationPipe) id: string, @Body() dto: UpdateScheduleDto) {
-		const updatedSchedule = await this.scheduleService.update(id, dto);
-		if (!updatedSchedule) {
-			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-
-		return updatedSchedule;
+		return await this.scheduleService.update(id, dto);
 	}
 }

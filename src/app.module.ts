@@ -6,6 +6,8 @@ import { ScheduleModule } from './schedule/schedule.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { FilesModule } from './files/files.module';
+import { TelegramModule } from './telegram/telegram.module';
+import { getTelegramConfig } from './configs/telegram.config';
 
 @Module({
 	imports: [
@@ -25,6 +27,11 @@ import { FilesModule } from './files/files.module';
 		AuthModule,
 		UserModule,
 		FilesModule,
+		TelegramModule.forRootAsync({
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			useFactory: getTelegramConfig,
+		}),
 	],
 	controllers: [],
 	providers: [],

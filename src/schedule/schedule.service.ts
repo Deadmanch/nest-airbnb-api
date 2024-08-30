@@ -7,12 +7,18 @@ import { ICreateSchedule } from './interfaces/create-schedule.interfaces';
 import { IUpdateSchedule } from './interfaces/update-schedule.interfaces';
 import { RoomDocument, RoomModel } from '../room/model/room.model';
 import { RoomErrors } from '../room/room.constants';
+import { TelegramService } from '../telegram/telegram.service';
+import {
+	generateCreateSсheduleMessage,
+	generateDeleteSсheduleMessage,
+} from '../helpers/generate-message';
 
 @Injectable()
 export class ScheduleService {
 	constructor(
 		@InjectModel(ScheduleModel.name) private readonly scheduleModel: Model<ScheduleDocument>,
 		@InjectModel(RoomModel.name) private readonly roomModel: Model<RoomDocument>,
+		private readonly telegramService: TelegramService,
 	) {}
 
 	async create({ roomId, date }: ICreateSchedule): Promise<ScheduleDocument> {
@@ -24,24 +30,48 @@ export class ScheduleService {
 		if (existingSchedule) {
 			throw new HttpException(ScheduleErrors.ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
 		}
+		const message = generateCreateSсheduleMessage(existingRoom, date);
+
+		this.telegramService.sendMessage(message);
 		return this.scheduleModel.create({ roomId, date });
 	}
 
 	async delete(id: string): Promise<ScheduleDocument | null> {
+		const existingSchedule = await this.scheduleModel.findById(id).exec();
+		if (!existingSchedule) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.scheduleModel.findByIdAndDelete(id).exec();
 	}
 
 	async deleteByRoomId(roomId: string) {
+		const existingRoom = await this.roomModel.findById(roomId).exec();
+		if (!existingRoom) {
+			throw new HttpException(RoomErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.scheduleModel.deleteMany({ roomId: new Types.ObjectId(roomId) }).exec();
 	}
 
 	async softDelete(id: string): Promise<ScheduleDocument | null> {
+		const existingSchedule = await this.scheduleModel.findById(id).exec();
+		if (!existingSchedule) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		if (existingSchedule.isDeleted) {
+			throw new HttpException(ScheduleErrors.ALREADY_DELETED, HttpStatus.BAD_REQUEST);
+		}
+		const message = generateDeleteSсheduleMessage(existingSchedule);
+
+		this.telegramService.sendMessage(message);
 		return this.scheduleModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true }).exec();
 	}
 
 	async getByRoomId(roomId: string): Promise<ScheduleDocument[] | null> {
 		const schedules = await this.scheduleModel.find({ roomId: new Types.ObjectId(roomId) }).exec();
-		return schedules.length > 0 ? schedules : null;
+		if (schedules.length === 0) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return schedules;
 	}
 	async getById(id: string): Promise<ScheduleDocument> {
 		const schedule = await this.scheduleModel.findById(id).exec();
@@ -56,7 +86,10 @@ export class ScheduleService {
 			.skip((page - 1) * limit)
 			.limit(limit)
 			.exec();
-		return schedules.length > 0 ? schedules : null;
+		if (schedules.length === 0) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return schedules;
 	}
 
 	async getBookingStatsForMonth(
@@ -104,10 +137,18 @@ export class ScheduleService {
 			])
 			.exec();
 
+		if (!schedules || schedules.length === 0) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+
 		return schedules;
 	}
 
 	async update(id: string, updateSchedule: IUpdateSchedule) {
+		const existingSchedule = await this.scheduleModel.findById(id).exec();
+		if (!existingSchedule) {
+			throw new HttpException(ScheduleErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
 		return this.scheduleModel.findByIdAndUpdate(id, updateSchedule, { new: true }).exec();
 	}
 }

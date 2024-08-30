@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserDocument, UserModel } from './model/user.model';
 import { Model } from 'mongoose';
 import { ICreateUser } from './interfaces/create-user.interface';
 import { genSalt, hash } from 'bcryptjs';
+import { UserErrors } from './user.constants';
 
 @Injectable()
 export class UserService {
@@ -18,10 +19,18 @@ export class UserService {
 	}
 
 	async getById(id: string): Promise<UserDocument | null> {
-		return await this.userModel.findById(id).exec();
+		const existingUser = await this.userModel.findById(id).exec();
+		if (!existingUser) {
+			throw new HttpException(UserErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return existingUser;
 	}
 
 	async getByEmail(email: string): Promise<UserDocument | null> {
-		return await this.userModel.findOne({ email }).exec();
+		const existingUser = await this.userModel.findOne({ email }).exec();
+		if (!existingUser) {
+			throw new HttpException(UserErrors.NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return existingUser;
 	}
 }
